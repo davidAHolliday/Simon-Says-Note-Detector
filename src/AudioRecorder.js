@@ -9,15 +9,15 @@ const AudioRecorder = () => {
     const mediaRecorderRef = useRef(null); // Ref to store the MediaRecorder instance
   
     const noteToSquareMapping = {
-      "B5": "row1-col1",
-      "C#5": "row1-col2",
-      "D#5": "row1-col3",
-      "E5": "row2-col1",
-      "F#5": "row2-col2",
-      "G#5": "row2-col3",
-      "A#5": "row3-col1",
-      "B6": "row3-col2",
-      "C#6": "row3-col3",
+      "A#4": "row1-col1",
+      "B5": "row1-col2",
+      "C#5": "row1-col3",
+      "D#5": "row2-col1",
+      "E5": "row2-col2",
+      "F#5": "row2-col3",
+      "G#5": "row3-col1",
+      "A#5": "row3-col2",
+      "B6": "row3-col3",
     };
 
 
