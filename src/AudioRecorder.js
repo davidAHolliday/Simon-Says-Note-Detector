@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as Tone from 'tone';
 import Pitchfinder from 'pitchfinder';
+import SpeechRecognition from 'react-speech-recognition';
 
 const AudioRecorder = () => {
     const [audioBlob, setAudioBlob] = useState(null);
@@ -20,11 +21,36 @@ const AudioRecorder = () => {
       "B6": "row3-col3",
     };
 
+    //Covert Notes into Numbers
+
+ const notesToNumber = {
+    "A#4": "1",
+    "B5": "2",
+    "C#5": "3",
+    "D#5": "4",
+    "E5": "5",
+    "F#5": "6",
+    "G#5": "7",
+    "A#5": "8",
+    "B6": "9",
+ }
+
+    const speakNumbers = (numList)=>{
+
+        //Convert to Number
+        const numbers = numList.map(note => notesToNumber[note] || 'unknown');
+
+        const utterance = new SpeechSynthesisUtterance();
+        utterance.text = numbers.join(", "); 
+        window.speechSynthesis.speak(utterance);
+    }
 
   
     const playbackPattern = () => {
         if (!detectedNotes || detectedNotes.length === 0) return;
         console.log(detectedNotes)
+
+        speakNumbers(detectedNotes)
     
         detectedNotes.forEach((note, index) => {
           setTimeout(() => {
