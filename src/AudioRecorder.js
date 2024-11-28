@@ -9,18 +9,17 @@ const AudioRecorder = () => {
     const mediaRecorderRef = useRef(null); // Ref to store the MediaRecorder instance
   
     const noteToSquareMapping = {
-      "D#": "row1-col1",
-      "C#": "row1-col2",
-      "D": "row1-col3",
-      "F#": "row2-col1",
-      "G": "row2-col2",
-      "G#": "row2-col3",
-      "A": "row3-col1",
-      "B": "row3-col2",
-      "B": "row3-col3",
+      "B5": "row1-col1",
+      "C#5": "row1-col2",
+      "D#5": "row1-col3",
+      "E5": "row2-col1",
+      "F#5": "row2-col2",
+      "G#5": "row2-col3",
+      "A#5": "row3-col1",
+      "B6": "row3-col2",
+      "C#6": "row3-col3",
     };
 
-    const normalizeNote = (note) => note.replace(/\d/g, "");
 
   
     const playbackPattern = () => {
@@ -29,7 +28,7 @@ const AudioRecorder = () => {
     
         detectedNotes.forEach((note, index) => {
           setTimeout(() => {
-            setCurrNote(normalizeNote(note)); // Set normalized note
+            setCurrNote(note); // Set normalized note
           }, index * 1500); // Set 1-second intervals
         });
     
