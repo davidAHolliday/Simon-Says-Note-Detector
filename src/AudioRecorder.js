@@ -9,30 +9,33 @@ const AudioRecorder = () => {
     const [currNote, setCurrNote] = useState(null);
     const mediaRecorderRef = useRef(null); // Ref to store the MediaRecorder instance
   
+
+    const assignedNotes = ['B5', 'x', 'D5', 'x', 'F#5', 'G5', 'x', '', 'C#5'];
+
     const noteToSquareMapping = {
-      "A#4": "row1-col1",
-      "B5": "row1-col2",
-      "C#5": "row1-col3",
-      "D#5": "row2-col1",
-      "E5": "row2-col2",
-      "F#5": "row2-col3",
-      "G#5": "row3-col1",
-      "A#5": "row3-col2",
-      "B6": "row3-col3",
+      [assignedNotes[0]]: "row1-col1",
+      [assignedNotes[1]]: "row1-col2",
+      [assignedNotes[2]]: "row1-col3",
+      [assignedNotes[3]]: "row2-col1",
+      [assignedNotes[4]]: "row2-col2",
+      [assignedNotes[5]]: "row2-col3",
+      [assignedNotes[6]]: "row3-col1",
+      [assignedNotes[7]]: "row3-col2",
+      [assignedNotes[8]]: "row3-col3",
     };
 
     //Covert Notes into Numbers
 
  const notesToNumber = {
-    "A#4": "1",
-    "B5": "2",
-    "C#5": "3",
-    "D#5": "4",
-    "E5": "5",
-    "F#5": "6",
-    "G#5": "7",
-    "A#5": "8",
-    "B6": "9",
+  [assignedNotes[0]]: "1",
+  [assignedNotes[1]]: "2",
+  [assignedNotes[2]]: "3",
+  [assignedNotes[3]]: "4",
+  [assignedNotes[4]]: "5",
+  [assignedNotes[5]]: "6",
+  [assignedNotes[6]]: "7",
+  [assignedNotes[7]]: "8",
+  [assignedNotes[8]]: "9",
  }
 
     const speakNumbers = (numList)=>{
@@ -82,57 +85,118 @@ const AudioRecorder = () => {
     const stopRecording = () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop(); // Stop recording
+        
       }
     };
-  
+
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0]; // Get the uploaded file
+      if (!file) return;
+    
+      // Convert the file to a Blob and process it
+      const blob = new Blob([file], { type: file.type });
+      setAudioBlob(blob);
+      await processAudio(blob);
+    };
+
+    const uploadAudio = async () => {
+      // Request access to the microphone
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+    
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/wav' });
+        setAudioBlob(blob);
+        processAudio(blob);
+      };
+    
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder; // Save MediaRecorder instance to the ref
+    };
+   
     const processAudio = async (blob) => {
       const audioBuffer = await blob.arrayBuffer();
       const decodedData = await Tone.getContext().decodeAudioData(audioBuffer);
   
-      const pitchDetector = Pitchfinder.YIN(); // Using the YIN algorithm
+      const pitchDetector = Pitchfinder.AMDF(); // Using the YIN algorithm
       const float32Array = decodedData.getChannelData(0); // Use the first channel
   
       const detectedFrequencies = [];
-      const chunkSize = 4096; // Increased chunk size for better accuracy
+      const chunkSize = 5120; // Increased chunk size for better accuracy
       for (let i = 0; i < float32Array.length; i += chunkSize) {
         const slice = float32Array.slice(i, i + chunkSize);
         const frequency = pitchDetector(slice);
+        console.log(frequency,"chunk: ",i)
+
         // Filter out frequencies outside the valid range
         if (frequency && frequency > 20 && frequency < 5000) {
+
+
           detectedFrequencies.push(frequency);
         } else {
           detectedFrequencies.push(null); // Represent silence as null
         }
       }
+
+      console.log(detectedFrequencies)
   
       // Convert frequencies to musical notes
       const notes = detectedFrequencies.map((freq) => {
         if (!freq) return null; // Handle undefined frequencies
+
+        if(freq === 918.75){
+          return 'A5'
+        }
   
         const noteNumber = 12 * Math.log2(freq / 440) + 69; // Exact MIDI note number
-        const roundedNoteNumber = Math.round(noteNumber); // Round to the nearest MIDI note
-  
+        const adjustedNoteNumber = noteNumber ; // Adjust backward by half-step
+        const roundedNoteNumber = Math.round(adjustedNoteNumber);  
         // Use Tone.js to map the MIDI note to a note name
-        return Tone.Frequency(roundedNoteNumber, 'midi').toNote();
+     
+          return Tone.Frequency(roundedNoteNumber, 'midi').toNote();
+        
       });
   
       // Filter out nulls and segment notes by silence
       const uniqueNotes = [];
-      const silenceThreshold = 5; // Number of consecutive silent chunks to mark a new note
+      const silenceThreshold = 1; // Number of consecutive silent chunks to mark a new note
       let silenceCount = 0;
       let lastNote = null;
   
+      let lastDetected = null;
+      const debounceTime = 200; // Milliseconds to wait before recognizing a new note
+      let noteOccurrence = {}; // Track the occurrence of each note
+
       notes.forEach((note) => {
         if (!note) {
-          // Increment silence count if the note is null (silence)
           silenceCount++;
         } else {
-          if (silenceCount >= silenceThreshold || note !== lastNote) {
-            // If there's enough silence or the note changes, treat it as a new note
-            uniqueNotes.push(note);
-            lastNote = note; // Update the last detected note
+          // Track the duration of each note
+          if (!noteOccurrence[note]) {
+            noteOccurrence[note] = 1;
+          } else {
+            noteOccurrence[note]++;
           }
-          silenceCount = 0; // Reset silence count when a note is detected
+    
+          // If a note has only occurred once or for a very short duration, treat it as an artifact
+          // if (noteOccurrence[note] <= 1) {
+          //   return; // Skip this note as an artifact
+          // }
+    
+          // Handle note detection with silence threshold and debounce
+          if (silenceCount >= silenceThreshold ) {
+            if (lastDetected !== note) {
+              setTimeout(() => {
+                uniqueNotes.push(note);
+                lastDetected = note; // Update the last detected note
+              }, debounceTime); // Delay to avoid detecting rapid changes
+            }
+            lastNote = note;
+          }
+          silenceCount = 0;
         }
       });
   
@@ -142,6 +206,25 @@ const AudioRecorder = () => {
     return (
       <div>
         <h1>Pitch Detection App</h1>
+        <div>
+    {/* Button to record audio */}
+    <button onClick={uploadAudio}>Upload Audio</button>
+
+    {/* File input for uploading audio files */}
+    <input
+      type="file"
+      accept="audio/*"
+      onChange={handleFileUpload}
+    />
+
+    {/* Display the audio blob if available */}
+    {audioBlob && (
+      <audio controls>
+        <source src={URL.createObjectURL(audioBlob)} type="audio/wav" />
+        Your browser does not support the audio tag.
+      </audio>
+    )}
+  </div>
         <button onClick={recordAudio}>Start Recording</button>
         <button onClick={stopRecording}>Stop Recording</button>
         <button onClick={playbackPattern}>Play Pattern</button>

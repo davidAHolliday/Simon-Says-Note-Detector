@@ -1,0 +1,10 @@
+.square {
+    width: 100px;
+    height: 100px;
+    background-color: red;
+    transition: background-color 0.3s; /* Smooth transition for color change */
+}
+
+.square:hover {
+    background-color: yellow; /* Change color on hover */
+}

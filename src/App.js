@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 import AudioRecorder from './AudioRecorder';
+import ManualRecording from './ManualRecording';
 
 function App() {
   return (
@@ -8,7 +9,8 @@ function App() {
       <header className="App-header">
       
      
-          <AudioRecorder/>
+          {/* <AudioRecorder/> */}
+          <ManualRecording/>
      
       </header>
     </div>
