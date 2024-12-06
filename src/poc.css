@@ -1,10 +1,25 @@
 .square {
     width: 100px;
     height: 100px;
+    border-radius: 50%;
+    margin: 10px;
     background-color: red;
     transition: background-color 0.3s; /* Smooth transition for color change */
 }
 
+.erase{
+    margin-top: 20px;
+    width: 100px;
+    height: 100px;
+    background-color: grey;
+}
+
+
+
 .square:hover {
     background-color: yellow; /* Change color on hover */
+}
+
+#button{
+    height: 100px
 }

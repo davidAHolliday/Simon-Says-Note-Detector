@@ -1,9 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './poc.css'
+import Timer from './timer';
 const ManualRecording = () => {
     const [detectedNotes, setDetectedNotes] = useState([]);
     const [currNote, setCurrNote] = useState(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isClear, setIsClear] = useState(false);
+
   
+
+
+  useEffect(()=>{
+    console.log(detectedNotes.length)
+    if(detectedNotes.length > 0){
+      setIsRunning(true)
+      
+    }
+
+  },[detectedNotes])
 
     const assignedNotes = ['B5', 'x', 'D5', 'x', 'F#5', 'G5', 'x', '', 'C#5'];
 
@@ -60,7 +74,7 @@ const ManualRecording = () => {
         detectedNotes.forEach((note, index) => {
           setTimeout(() => {
             setCurrNote(note); // Set normalized note
-          }, index * 1500); // Set 1-second intervals
+          }, index * 1000); // Set 1-second intervals
         });
     
         // Reset the current note after playback finishes
@@ -71,9 +85,8 @@ const ManualRecording = () => {
 const addNote =(col, row)  =>{
   const str1 = String(col);
   const row1 =  String(row);
-  const nts = detectedNotes;
-  nts.push(str1.concat(row1))
-  setDetectedNotes(nts)
+  const nts = str1.concat(row1);
+  setDetectedNotes((prev)=> [...prev,nts])
 
 }
     
@@ -81,6 +94,7 @@ const addNote =(col, row)  =>{
     return (
       <div>
         <h1>Pitch Detection App</h1>
+        <Timer isRunning={isRunning} isClear={isClear} setIsClear={setIsClear} />
         <div>
    
 
@@ -96,28 +110,27 @@ const addNote =(col, row)  =>{
           {["row1", "row2", "row3"].map((row, rowIndex) => (
             <div key={rowIndex} className={row} style={{ display: 'flex' }}>
               {["col1", "col2", "col3"].map((col, colIndex) => {
-                const squareId = `${row}-${col}`;
                 return (
                   <div
                   className='square'
                   onClick={()=>addNote(colIndex,rowIndex)}
-                    key={colIndex}
-                    style={{
-                      height: 70,
-                      width: 70,
-                      margin: 10,
-                      // backgroundColor:
-                      //   currNote &&
-                      //   noteToSquareMapping[currNote] === squareId
-                      //     ? "yellow"
-                      //     : "blue",
-                    }}
+                    key={colIndex+rowIndex}
                   ></div>
                 );
               })}
             </div>
+            
           ))}
+          <div className='erase' onClick={()=>setDetectedNotes(prev=>prev.slice(0,-1))}>Erase</div>
         </div>
+        <button onClick={()=>setIsRunning(false)}>Stop Timer</button>
+        <button onClick={()=>{
+          setIsRunning(false)
+          setDetectedNotes([])
+          setCurrNote([])
+          setIsClear(true)
+          }}>Clear</button>
+
       </div>
     );
   };
