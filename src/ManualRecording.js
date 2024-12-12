@@ -70,15 +70,33 @@ const ManualRecording = () => {
     setCurrNote(note);
   };
 
+  function getRowColor(rowIndex) {
+    const colors = ["red", "blue", "green", "purple", "orange"]; // Add as many colors as needed
+    return colors[rowIndex % colors.length]; // Cycle through colors
+  }
+  
+
   return (
     <div>
-      <h1>Pitch Detection App</h1>
+      <h1>Pattern Repetition Playback App</h1>
       <Timer isRunning={isRunning} isClear={isClear} setIsClear={setIsClear} />
       <div>
-        <button onClick={playbackPattern}>Play Pattern</button>
-        <h2>Detected Notes:</h2>
-        <p>{detectedNotes.join(', ')}</p>
-      </div>
+  <button onClick={playbackPattern}>Play Pattern</button>
+  <h2>Detected Notes:</h2>
+  <div>
+    {detectedNotes.reduce((rows, note, index) => {
+      const rowIndex = Math.floor(index / 4); // Determine the row number
+      if (!rows[rowIndex]) rows[rowIndex] = []; // Initialize a new row if needed
+      rows[rowIndex].push(note);
+      return rows;
+    }, []).map((row, rowIndex) => (
+      <p key={rowIndex} style={{ color: getRowColor(rowIndex) }}> {/* Assign row color */}
+        {row.join(" ")} {/* Join notes in the row with spaces */}
+      </p>
+    ))}
+  </div>
+</div>
+
       <div className="box" style={{ display: 'flex', flexDirection: 'column' }}>
         {["row1", "row2", "row3"].map((row, rowIndex) => (
           <div key={rowIndex} className={row} style={{ display: 'flex' }}>
