@@ -23,3 +23,18 @@
 #button{
     height: 100px
 }
+
+.key-pad{
+    width: auto;
+    border:1px black solid;
+
+
+}
+
+.result-pad{
+    padding:auto;
+    border:1px black solid;
+    width: 50%;
+    font-size: 20px;
+
+}

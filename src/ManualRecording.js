@@ -33,21 +33,28 @@ const ManualRecording = () => {
     '22': "9",
    }
 
-  const speakNumbers = (numList, pauseDuration = 700) => {
+   const speakNumbers = (numList, pauseDuration = 700, groupPauseDuration = 1500) => {
     // Convert to numbers and speak each
     const numbers = numList.map((note) => note || 'unknown');
     numbers.forEach((number, index) => {
       const utterance = new SpeechSynthesisUtterance(number.toString());
       setCurrNote(number);
       window.speechSynthesis.speak(utterance);
-
-      if (index < numbers.length - 1) {
+  
+      // Check if we need to add a group pause
+      if ((index + 1) % 4 === 0 && index < numbers.length - 1) {
+        const groupPause = new SpeechSynthesisUtterance('');
+        groupPause.volume = 0; // Silence
+        setTimeout(() => window.speechSynthesis.speak(groupPause), (pauseDuration + groupPauseDuration) * index);
+      } else if (index < numbers.length - 1) {
+        // Add a normal pause
         const pause = new SpeechSynthesisUtterance('');
-        pause.volume = 0;
+        pause.volume = 0; // Silence
         setTimeout(() => window.speechSynthesis.speak(pause), pauseDuration * index);
       }
     });
   };
+  
 
   const playbackPattern = () => {
     if (!detectedNotes || detectedNotes.length === 0) return;
@@ -82,22 +89,9 @@ const ManualRecording = () => {
       <Timer isRunning={isRunning} isClear={isClear} setIsClear={setIsClear} />
       <div>
   <button onClick={playbackPattern}>Play Pattern</button>
-  <h2>Detected Notes:</h2>
-  <div>
-    {detectedNotes.reduce((rows, note, index) => {
-      const rowIndex = Math.floor(index / 4); // Determine the row number
-      if (!rows[rowIndex]) rows[rowIndex] = []; // Initialize a new row if needed
-      rows[rowIndex].push(note);
-      return rows;
-    }, []).map((row, rowIndex) => (
-      <p key={rowIndex} style={{ color: getRowColor(rowIndex) }}> {/* Assign row color */}
-        {row.join(" ")} {/* Join notes in the row with spaces */}
-      </p>
-    ))}
-  </div>
-</div>
-
-      <div className="box" style={{ display: 'flex', flexDirection: 'column' }}>
+  <div style={{display:"flex"}}className='main-box'>
+    <div className='key-pad'>
+    <div className="box" style={{ display: 'flex', flexDirection: 'column' }}>
         {["row1", "row2", "row3"].map((row, rowIndex) => (
           <div key={rowIndex} className={row} style={{ display: 'flex' }}>
             {["col1", "col2", "col3"].map((col, colIndex) => {
@@ -121,6 +115,29 @@ const ManualRecording = () => {
         ))}
         <div className="erase" onClick={() => setDetectedNotes((prev) => prev.slice(0, -1))}>Erase</div>
       </div>
+
+    </div>
+    <div className='result-pad'>
+  
+    {detectedNotes.reduce((rows, note, index) => {
+      const rowIndex = Math.floor(index / 4); // Determine the row number
+      if (!rows[rowIndex]) rows[rowIndex] = []; // Initialize a new row if needed
+      rows[rowIndex].push(note);
+      return rows;
+    }, []).map((row, rowIndex) => (
+      <p key={rowIndex} style={{ color: getRowColor(rowIndex) }}> {/* Assign row color */}
+        {row.join(" ")} {/* Join notes in the row with spaces */}
+      </p>
+    ))}
+ 
+      
+      </div>
+
+  </div>
+ 
+</div>
+
+      
       <button onClick={() => setIsRunning(false)}>Stop Timer</button>
       <button
         onClick={() => {
